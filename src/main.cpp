@@ -17,6 +17,7 @@
 #include "timer.hpp"
 #include "textField.hpp"
 #include "speechBubble.hpp"
+#include "gameBoard.hpp"
 
 /* globals */
 #include "constants.hpp"
@@ -32,8 +33,7 @@ std::filesystem::path setProjectRoot(const std::filesystem::path& executablePath
 }
 }
 
-int main(int argc, char** argv) 
-{
+int main(int argc, char** argv) {
     std::filesystem::path executablePath = std::filesystem::absolute(argv[0]);
     std::filesystem::current_path(setProjectRoot(executablePath));
 
@@ -49,6 +49,9 @@ int main(int argc, char** argv)
     Shader backgroundShader = LoadShader(0, TextFormat("src/stripeShader.fs"));
 
 
+    GameBoard gameBoard{{0.5f,0.5f}, 0.8f, 0.8f, 0.075f};
+    gameBoard.setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y}); 
+
     ContainerBox topBar{{0.5f,0.0f}, 1.0f, 0.2f};
     topBar.setOriginAlignment(ContainerBox::CENTRE_X);
     ContainerBox* insetTopBar = [&topBar](){
@@ -61,12 +64,26 @@ int main(int argc, char** argv)
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(rb)));
     }();
 
+    TextButton* submitButton = [&insetTopBar](){
+        auto sb = std::make_unique<TextButton>(Vector2{0.5f, 0.0f}, 0.3f, 0.1f, limeColour, "Submit");
+        sb->setOriginAlignment(ContainerBox::CENTRE_X);
+        return static_cast<TextButton*>(insetTopBar->addChild(std::move(sb)));
+    }();
+
     TextButton* informationButton = [&insetTopBar](){
         auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.1f, 0.1f, creamColour, "i");
         ib->setOriginAlignment(ContainerBox::RIGHT);
-        ib->setAbsFontSize(32.0f);
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(ib)));
     }();
+
+
+    submitButton->bindOnClick([&gameBoard](){
+        gameBoard.computerMove();
+    });
+    resetButton->bindOnClick([&gameBoard](){
+        gameBoard.resetState();
+    });
+
 
 
 
@@ -171,6 +188,8 @@ int main(int argc, char** argv)
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RED);
             EndShaderMode();
 
+
+            gameBoard.Draw();
             for(UIElement* uiElement: UIElement::getAllElements()) {
                 if(uiElement->getIsAutoDraw()) uiElement->Draw();
             }

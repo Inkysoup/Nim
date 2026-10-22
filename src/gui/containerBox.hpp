@@ -46,8 +46,6 @@ public:
     static void setScreenRatio(float newRatio);
     static float getScreenMagnitude();
     static Vector2 getScreenSize();
-
-
     
     virtual void drawDebug(Color colour = MAGENTA);
 

@@ -25,7 +25,7 @@ void Button::Draw(){
         Rectangle topFaceRect = topFaceContainer->getRect();
         DrawRectangleRounded(topFaceRect, 0.5f, 5, colour);
         DrawRectangleRounded(topFaceRect, 0.5f, 5, darkenOverlay);
-        DrawRectangleRoundedLinesEx(topFaceRect, 0.5f, 5, 2, BLACK);
+        DrawRectangleRoundedLinesEx(topFaceRect, 0.5f, 5, getOutlineWidth(), BLACK);
     }
     else{
         Rectangle rect = UIElement::getRect();
