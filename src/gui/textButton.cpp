@@ -17,6 +17,7 @@ TextButton::~TextButton(){
 }
 
 void TextButton::Draw(){
+    if(getIsDisabled()) return;
     Button::Draw();
 
     textContainer->setColour(BLACK);

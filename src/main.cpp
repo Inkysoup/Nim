@@ -196,6 +196,7 @@ int main(int argc, char** argv) {
             UIElement::drawActive();
         EndDrawing();
     };
+    
     UnloadShader(backgroundShader);
     CloseWindow();
 }

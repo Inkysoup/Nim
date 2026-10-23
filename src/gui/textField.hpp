@@ -30,7 +30,7 @@ public:
     std::string getText();
     void setTextAlignment(std::pair<AlignmentX, AlignmentY> newTextAlignment);
 
-    void Draw();
+    virtual void Draw();
     void drawDebug(Color colour = GREEN) override;
 
     void setSize(float newDecimalWidth, float newDecimalHeight, bool isSilent = false) override;

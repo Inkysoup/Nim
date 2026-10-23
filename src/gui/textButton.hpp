@@ -9,7 +9,7 @@ private:
 public:
     TextButton(Vector2 buttonPosition, float buttonWidth, float buttonHeight, Color buttonColor, std::string buttonText);
     ~TextButton();
-    void Draw();
+    void Draw() override;
     void setText(std::string newText);
     void setAbsFontSize(float newAbsFontSize);
 };

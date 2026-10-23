@@ -9,10 +9,10 @@ protected:
     ContainerBox* topFaceContainer;
     Color colour;
     Timer pressedTimer;
-    void Draw();
 public:
     Button(Vector2 buttonPosition, float buttonWidth, float buttonHeight, Color buttonColor);
     ~Button();
+    void Draw() override;
     void handleKeyboardInput(int keycode);
     void setColour(Color newColour);
 };

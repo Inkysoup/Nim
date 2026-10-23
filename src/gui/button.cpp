@@ -19,6 +19,7 @@ Button::~Button(){
 }
 
 void Button::Draw(){
+    if(getIsDisabled()) return;
     if(buttonState == HELD or pressedTimer.getSecondsRemaining() > 0.0f){
         topFaceContainer->setOriginAlignment(ContainerBox::BOTTOM);
         topFaceContainer->setOffsetY(1.0f);

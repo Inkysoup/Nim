@@ -35,7 +35,6 @@ void SpeechBubble::show(){
 }
 
 void SpeechBubble::Draw(){
-    //TextField::drawDebug();
     Rectangle rect = TextField::getRect();
     Vector2 rectCentre = {rect.x+rect.width*0.5f, rect.y+rect.height*0.5f};
     Vector2 stemTipTruePoition = {stemTip->getRect().x, stemTip->getRect().y};

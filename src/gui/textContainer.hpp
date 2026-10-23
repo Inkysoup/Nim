@@ -30,7 +30,7 @@ public:
         Color textColour = BLACK, float textAlpha = 1.0f);
     ~TextContainer();
 
-    void Draw();
+    virtual void Draw();
 
     void setText(std::string newText);
     std::string getText();
