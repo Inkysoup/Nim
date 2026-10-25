@@ -30,6 +30,7 @@ UIElement::UIElement(Vector2 boxPosition, float boxWidth, float boxHeight) : Con
     visualOffset = {0.0f, 0.0f};
     isDisabled = false;
     doAutoDraw = true;
+    isTabNavigatable = true;
     onClickFunc = [](){return;};
     onUnactiveFunc = [](){return;};
 }
@@ -113,10 +114,10 @@ void UIElement::clearActive(){
     }
     ptrActive = nullptr;
 }
-void UIElement::progressActive(int indexes){
+void UIElement::progressActive(int indexes){ // only valid for -1, 0, 1 if any element isnt tabnavigatable.
     sortAllElements();
 
-    if (allElements.empty()) {
+    if(allElements.empty()) {
         ptrActive = nullptr;
         return;
     }
@@ -126,9 +127,18 @@ void UIElement::progressActive(int indexes){
         ptrActive = allElements[0];
         return;
     }
-
+    int initialIndex = std::distance(std::begin(allElements), it);
+    
     int i = std::distance(allElements.begin(), it);
     int newIndex = (i+indexes + allElements.size())%allElements.size(); // (a%b + b)%b) to handle negatives
+    int progressionDir = indexes < 0 ? -1 : 1;
+    while(!allElements[newIndex]->getIsTabNavigatable()){
+        newIndex = (newIndex+progressionDir + allElements.size())%allElements.size();
+        if(newIndex == initialIndex){
+            ptrActive = nullptr;
+            return;
+        }
+    }
     ptrActive = allElements[newIndex];
 }
 void UIElement::drawActive(){
@@ -183,6 +193,14 @@ void UIElement::drawActive(){
         }
         // --------------- //
     rlPopMatrix();
+}
+
+void UIElement::setTabNavigatable(bool isTabNavigatable){
+    this->isTabNavigatable = isTabNavigatable;
+}
+
+bool UIElement::getIsTabNavigatable(){
+    return isTabNavigatable;
 }
 
 void UIElement::Draw(){

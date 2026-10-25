@@ -18,7 +18,7 @@ public:
     ~SpeechBubble();
     void hide();
     void show();
-    void Draw() override;
+    void Draw();
 
     UIElement* addControl(std::unique_ptr<UIElement> control);
 

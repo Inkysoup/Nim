@@ -4,8 +4,6 @@
 #include <random>
 
 #include <exception>
-
-
 #include <iostream>
 
 unsigned GameBoard::getRowByMSB(unsigned bitmask){
@@ -23,41 +21,46 @@ unsigned GameBoard::getNonSingleRow(){
 
 void GameBoard::disableTiles(unsigned rowIndex, unsigned count){
     int i = 0;
+    auto rowSelectionSet = gameTiles[rowIndex]->getMembers();
     while(count > 0){
-        GameTile* tile = gameTiles[rowIndex][i];
-        if(!tile->getIsDisabled()){
-            tile->disable();
-            --count;
+        if(auto* tile = dynamic_cast<GameTile*>(rowSelectionSet[i])) {
+            if(!tile->getIsDisabled()){
+                tile->disable();
+                --count;
+            }
+            ++i;
         }
-        ++i;
     }
+    gameTiles[rowIndex]->resizeBoundingBox();
 }
 
-GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, float tileDiameter) : ContainerBox(position, boardWidth, boardHeight)
-{
-    int rowCount = 5;
+GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, float tileWidth, float tileHeight):
+        ContainerBox(position, boardWidth, boardHeight){
+    int rowCount = 6;
     //float absTileRadius = ContainerBox::getScreenMagnitude()*tileRadius;
 
-    float yTileGap = (boardHeight - (tileDiameter*rowCount))/(rowCount - 1.0f); 
+    float yTileGap = (boardHeight - (tileHeight*rowCount))/(rowCount - 1.0f); 
     float relativeYTileGap = yTileGap / boardHeight;
-    float relativeTileDiameter = tileDiameter / boardHeight;
+    float relativeTileHeight = tileHeight / boardHeight;
 
     int maxTileCount = (rowCount-1)*2 + 1;
-    float xTileGap = (boardWidth - (tileDiameter*maxTileCount))/(maxTileCount - 1.0f); 
+    float xTileGap = (boardWidth - (tileWidth*maxTileCount))/(maxTileCount - 1.0f); 
     float relativeXTileGap = xTileGap / boardWidth;
+    float relativeTileWidth = tileWidth / boardHeight;
 
     for(int i = 0; i<rowCount; ++i){
-        float yPos = i*(relativeTileDiameter + relativeYTileGap);
+        float yPos = i*(relativeTileHeight + relativeYTileGap);
         
         int tileCount = 1 + 2*i;
-        std::vector<GameTile*> rowTiles;
+        gameTiles.emplace_back(std::make_unique<SelectionSet>());
+        SelectionSet* ss = &*gameTiles.back();
         for(int j = 0; j<tileCount; ++j){
-            float xPos = j*(relativeTileDiameter + relativeXTileGap);
-            auto gt = std::make_unique<GameTile>(Vector2{xPos, yPos}, tileDiameter);
+            float xPos = j*(relativeTileWidth + relativeXTileGap);
+            auto gt = std::make_unique<GameTile>(Vector2{xPos, yPos}, tileWidth, tileHeight, ss);
             gt->setAutoDraw(false);
-            rowTiles.push_back(static_cast<GameTile*>(this->addChild(std::move(gt))));
+            gt->setTabNavigatable(false);
+            gameTiles.back()->addMember(addChild(std::move(gt)));
         }
-        gameTiles.push_back(rowTiles);
     }
 }
 
@@ -65,9 +68,12 @@ GameBoard::~GameBoard(){
 }
 
 void GameBoard::Draw(){
-    for(auto rowTiles: gameTiles){
-        for(GameTile* tile: rowTiles){
-            tile->Draw();
+    for(const auto& rowSelectionSet: gameTiles){
+        rowSelectionSet->drawDebug();
+        for(ContainerBox* child: rowSelectionSet->getMembers()){
+            if(auto* tile = dynamic_cast<GameTile*>(child)) {
+                tile->Draw();
+            }
         }
     }
 }
@@ -77,10 +83,12 @@ void GameBoard::computerMove(){
     unsigned nimSum = 0;
     unsigned singlesRemaining = 0;
     unsigned nonSinglesRemaining = 0;
-    for(auto row: gameTiles){
+    for(const auto& row: gameTiles){
         unsigned rowSum = 0;
-        for(GameTile* tile: row){
-            if(!tile->getIsDisabled()) rowSum += 1; 
+        for(ContainerBox* child: row->getMembers()){
+            if(auto* tile = dynamic_cast<GameTile*>(child)) {
+                if(!tile->getIsDisabled()) rowSum += 1;
+            }
         }
         rowSums.push_back(rowSum);
         if(rowSum > 1) ++nonSinglesRemaining;
@@ -123,9 +131,12 @@ void GameBoard::computerMove(){
 }
 
 void GameBoard::resetState(){
-    for(auto rowTiles: gameTiles){
-        for(GameTile* tile: rowTiles){
-            tile->enable();
+    for(const auto& rowSelectionSet: gameTiles){
+        for(ContainerBox* child: rowSelectionSet->getMembers()){
+            if(auto* tile = dynamic_cast<GameTile*>(child)) {
+                tile->enable();
+            }
         }
-    }   
+        rowSelectionSet->resizeBoundingBox();
+    }
 }

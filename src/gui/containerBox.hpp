@@ -50,7 +50,6 @@ public:
     virtual void drawDebug(Color colour = MAGENTA);
 
     Rectangle getRect() const;
-    ContainerBox* addChild(Vector2 decimalAcrossParent, float boxDecimalWidth, float boxDecimalHeight);
     ContainerBox* addChild(std::unique_ptr<ContainerBox> child);
     void clearChildren();
     std::vector<ContainerBox*> getChildren() const;
@@ -72,7 +71,8 @@ public:
     virtual void onScreenResize();
     static void onScreenResizeManager();
     virtual void onAnyResizeComplete(ContainerBox* source);
-    void addResizeListener(ContainerBox* listener);
+    // should remove below and usage in textfield in favour of making parents trigger their childrens' onscreenresize method
+    void addResizeListener(ContainerBox* listener); 
     void removeResizeListener(ContainerBox* listener);
 };
 

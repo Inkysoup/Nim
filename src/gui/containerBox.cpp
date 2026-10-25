@@ -61,14 +61,6 @@ Rectangle ContainerBox::getRect() const{
     return rect;
 }
 
-ContainerBox* ContainerBox::addChild(Vector2 decimalAcrossParent, float boxDecimalWidth, float boxDecimalHeight){
-    auto child = std::make_unique<ContainerBox>(decimalAcrossParent, boxDecimalWidth, boxDecimalHeight);
-    child->parent = this;
-    child->updateOffsets();
-    children.emplace_back(std::move(child));
-    return children.back().get();
-}
-
 ContainerBox* ContainerBox::addChild(std::unique_ptr<ContainerBox> child){
     // set parent pointer for the child and store ownership
     child->parent = this;

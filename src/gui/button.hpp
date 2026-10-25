@@ -12,7 +12,7 @@ protected:
 public:
     Button(Vector2 buttonPosition, float buttonWidth, float buttonHeight, Color buttonColor);
     ~Button();
-    void Draw() override;
+    void Draw();
     void handleKeyboardInput(int keycode);
     void setColour(Color newColour);
 };

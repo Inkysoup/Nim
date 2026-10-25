@@ -11,6 +11,7 @@ private:
     static std::vector<UIElement*> allElements;
     bool isDisabled;
     bool doAutoDraw;
+    bool isTabNavigatable;
     static UIElement* ptrActive;
     static std::pair<float, Color> activeLineProperties[2];
     static void sortAllElements();
@@ -27,13 +28,12 @@ protected:
     Vector2 visualOffset;
     void callUnactiveFunc();
 public:
-    // constructors and destructor
     UIElement(Vector2 boxPosition, float boxWidth, float boxHeight);
     virtual ~UIElement();
 
     static const std::vector<UIElement*> &getAllElements();
 
-    bool isPressed(Vector2 mousePos, bool mouseUp, bool mouseDown);
+    virtual bool isPressed(Vector2 mousePos, bool mouseUp, bool mouseDown);
     void setPressed();
     void setActive();
     static UIElement* getActive();
@@ -41,6 +41,8 @@ public:
     static void clearActive();
     static void progressActive(int indexes);
     static void drawActive();
+    void setTabNavigatable(bool isTabNavigatable);
+    bool getIsTabNavigatable();
     virtual void Draw();
     virtual void handleKeyboardInput(int keycode) = 0;
     void bindOnClick(std::function<void(void)> func);
