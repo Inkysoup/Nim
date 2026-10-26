@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     Shader backgroundShader = LoadShader(0, TextFormat("src/stripeShader.fs"));
 
 
-    GameBoard gameBoard{{0.5f,0.5f}, 0.8f, 0.8f, 0.075, 0.125};
+    GameBoard gameBoard{{0.5f,0.5f}, 0.8f, 0.8f, 0.05f, 0.125f};
     gameBoard.setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y}); 
 
     ContainerBox topBar{{0.5f,0.0f}, 1.0f, 0.2f};

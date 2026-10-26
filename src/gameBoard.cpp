@@ -54,8 +54,9 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
         gameTiles.emplace_back(std::make_unique<SelectionSet>());
         SelectionSet* ss = &*gameTiles.back();
         for(int j = 0; j<tileCount; ++j){
-            float xPos = j*(relativeTileWidth + relativeXTileGap);
+            float xPos = 0.5f + (j-tileCount/2.0f)*(relativeTileWidth) + (j-(tileCount-1)/2.0f) * relativeXTileGap;
             auto gt = std::make_unique<GameTile>(Vector2{xPos, yPos}, tileWidth, tileHeight, ss);
+            //gt->setOriginAlignment(CENTRE_X);
             gt->setAutoDraw(false);
             gt->setTabNavigatable(false);
             gameTiles.back()->addMember(addChild(std::move(gt)));
@@ -68,7 +69,6 @@ GameBoard::~GameBoard(){
 
 void GameBoard::Draw(){
     for(const auto& rowSelectionSet: gameTiles){
-        rowSelectionSet->drawDebug();
         for(ContainerBox* child: rowSelectionSet->getMembers()){
             if(auto* tile = dynamic_cast<GameTile*>(child)) {
                 tile->Draw();
