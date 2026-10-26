@@ -11,15 +11,18 @@ class GameBoard: public ContainerBox{
 private:
     std::vector<std::unique_ptr<SelectionSet>> gameTiles;
     std::vector<unsigned> rowSums;
+    SelectionSet* selectedRow;
 
-    unsigned getRowByMSB(unsigned bitmask);
-    unsigned getNonSingleRow();
-    void disableTiles(unsigned rowIndex, unsigned count);
+    int getRowByMSB(unsigned bitmask);
+    int getNonSingleRow();
+    void disableTiles(int rowIndex, unsigned count);
 public:
     GameBoard(Vector2 position, float boardWidth, float boardHeight, float tileWidth, float tileHeight);
     ~GameBoard();
     void Draw();
 
+    void submit();
+    void setSelectedRow(SelectionSet* row);
     void computerMove();
     void resetState();
 };

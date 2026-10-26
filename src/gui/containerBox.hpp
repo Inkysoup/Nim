@@ -3,7 +3,7 @@
 #include <set>
 #include <vector>
 #include <memory>
-
+#include <optional>
 
 
 class ContainerBox{
@@ -54,6 +54,8 @@ public:
     void clearChildren();
     std::vector<ContainerBox*> getChildren() const;
     
+    ContainerBox* getParent() const;
+
     virtual void setSize(float newDecimalWidth, float newDecimalHeight, bool isSilent = false);
     Vector2 getSize();
 

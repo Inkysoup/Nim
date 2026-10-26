@@ -80,6 +80,10 @@ std::vector<ContainerBox*> ContainerBox::getChildren() const {
     return returnChildren;
 }
 
+ContainerBox* ContainerBox::getParent() const{
+    return parent;
+}
+
 void ContainerBox::setSize(float newDecimalWidth, float newDecimalHeight, bool isSilent){
     boxDecimalWidth = newDecimalWidth;
     boxDecimalHeight = newDecimalHeight;
@@ -120,8 +124,12 @@ void ContainerBox::updatePosition(bool isSilent){
     updateOriginOffset();
 
     Rectangle parentRect;
-    if(parent == nullptr){parentRect = {0.0f, 0.0f, static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};}
-    else{parentRect = parent->getRect();}
+    if(parent == nullptr){
+        parentRect = {0.0f, 0.0f, static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
+    }
+    else{
+        parentRect = (parent)->getRect();
+    }
 
     rect.x = parentRect.x + decimalAcrossParent.x * parentRect.width - originOffset.x;
     rect.y = parentRect.y + decimalAcrossParent.y * parentRect.height - originOffset.y;

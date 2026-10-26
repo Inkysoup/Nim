@@ -41,6 +41,7 @@ public:
     static void clearActive();
     static void progressActive(int indexes);
     static void drawActive();
+    void drawSelect();
     void setTabNavigatable(bool isTabNavigatable);
     bool getIsTabNavigatable();
     virtual void Draw();

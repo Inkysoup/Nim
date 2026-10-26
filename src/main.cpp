@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 
 
     submitButton->bindOnClick([&gameBoard](){
-        gameBoard.computerMove();
+        gameBoard.submit();
     });
     resetButton->bindOnClick([&gameBoard](){
         gameBoard.resetState();

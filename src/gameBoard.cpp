@@ -3,23 +3,22 @@
 #include <bit>
 #include <random>
 
-#include <exception>
 #include <iostream>
 
-unsigned GameBoard::getRowByMSB(unsigned bitmask){
+int GameBoard::getRowByMSB(unsigned bitmask){
     for(unsigned i = 0; i<rowSums.size(); ++i){
         if((rowSums[i] & bitmask) != 0) return i;
     }
-    std::terminate();
+    return -1;
 }
-unsigned GameBoard::getNonSingleRow(){
+int GameBoard::getNonSingleRow(){
     for(unsigned i = 0; i<rowSums.size(); ++i){
         if(rowSums[i] > 1 ) return i;
     }
-    std::terminate();
+    return -1;
 }
 
-void GameBoard::disableTiles(unsigned rowIndex, unsigned count){
+void GameBoard::disableTiles(int rowIndex, unsigned count){
     int i = 0;
     auto rowSelectionSet = gameTiles[rowIndex]->getMembers();
     while(count > 0){
@@ -36,8 +35,8 @@ void GameBoard::disableTiles(unsigned rowIndex, unsigned count){
 
 GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, float tileWidth, float tileHeight):
         ContainerBox(position, boardWidth, boardHeight){
+    selectedRow = nullptr;
     int rowCount = 6;
-    //float absTileRadius = ContainerBox::getScreenMagnitude()*tileRadius;
 
     float yTileGap = (boardHeight - (tileHeight*rowCount))/(rowCount - 1.0f); 
     float relativeYTileGap = yTileGap / boardHeight;
@@ -78,11 +77,41 @@ void GameBoard::Draw(){
     }
 }
 
+void GameBoard::submit(){
+    if(selectedRow == nullptr) return;
+    int removedTiles = 0;
+    for(ContainerBox* child: selectedRow->getMembers()){
+        if(auto* tile = dynamic_cast<GameTile*>(child)) {
+            if(tile->getIsMarked()){
+                tile->unmark();
+                tile->disable();
+                ++removedTiles;
+            }
+        }
+    }
+    if(removedTiles == 0) return;
+    selectedRow->resizeBoundingBox();
+    selectedRow = nullptr;
+    computerMove();
+}
+
+void GameBoard::setSelectedRow(SelectionSet* row){
+    if(row == selectedRow) return;
+    if(selectedRow != nullptr){
+        for(ContainerBox* child: selectedRow->getMembers()){
+            if(auto* tile = dynamic_cast<GameTile*>(child)) {
+                tile->unmark();
+            }
+        }
+    }
+    selectedRow = row;
+}
+
 void GameBoard::computerMove(){
     rowSums.clear();
     unsigned nimSum = 0;
     unsigned singlesRemaining = 0;
-    unsigned nonSinglesRemaining = 0;
+    unsigned multisRemaining = 0;
     for(const auto& row: gameTiles){
         unsigned rowSum = 0;
         for(ContainerBox* child: row->getMembers()){
@@ -91,7 +120,7 @@ void GameBoard::computerMove(){
             }
         }
         rowSums.push_back(rowSum);
-        if(rowSum > 1) ++nonSinglesRemaining;
+        if(rowSum > 1) ++multisRemaining;
         else if(rowSum == 1) ++singlesRemaining;
         nimSum ^= rowSum; // bitwise xor
     }
@@ -99,26 +128,29 @@ void GameBoard::computerMove(){
     unsigned msbMask = std::bit_floor(nimSum);
     unsigned rowIndex;
     unsigned removeCount;
-    if(nimSum != 0 or (nonSinglesRemaining == 0 and singlesRemaining%2 == 0)){ // computer wins
-        if(nonSinglesRemaining > 1){
+    if(multisRemaining + singlesRemaining == 0){ // game is over
+        return;
+    }
+    else if(nimSum != 0 or (multisRemaining == 0 and singlesRemaining%2 == 0)){ // computer wins
+        if(multisRemaining > 1){
             rowIndex = getRowByMSB(msbMask);
             removeCount = rowSums[rowIndex] - (nimSum ^ rowSums[rowIndex]);
         }
-        else if(nonSinglesRemaining == 1){ // entering endgame
+        else if(multisRemaining == 1){ // entering endgame
             rowIndex = getNonSingleRow();
             // make the non-single row 1 or clear it in order to keep row count odd 
             if(singlesRemaining%2 == 0) removeCount = rowSums[rowIndex] - 1;
             else removeCount = rowSums[rowIndex];
         }
         else{ // forced moves in endgame
-            rowIndex = getRowByMSB(1);
+            rowIndex = getRowByMSB(1); // find singlerow 
             removeCount = 1;
         }
     }
-    else{ // computer loses
+    else if(singlesRemaining > 0 or multisRemaining > 0){ // computer loses
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> rowDist(0, singlesRemaining + nonSinglesRemaining - 1);
+        std::uniform_int_distribution<> rowDist(0, singlesRemaining + multisRemaining - 1);
         rowIndex = rowDist(gen);
         for(unsigned i = 0; i < rowSums.size(); ++i){
             if(rowSums[i] == 0) ++rowIndex;
@@ -127,6 +159,7 @@ void GameBoard::computerMove(){
         std::uniform_int_distribution<> removeCountDist(1, rowSums[rowIndex]);
         removeCount = removeCountDist(gen);
     }
+
     disableTiles(rowIndex, removeCount);
 }
 
@@ -135,6 +168,7 @@ void GameBoard::resetState(){
         for(ContainerBox* child: rowSelectionSet->getMembers()){
             if(auto* tile = dynamic_cast<GameTile*>(child)) {
                 tile->enable();
+                tile->unmark();
             }
         }
         rowSelectionSet->resizeBoundingBox();

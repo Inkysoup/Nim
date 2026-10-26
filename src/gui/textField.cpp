@@ -137,6 +137,7 @@ TextField::TextField(Vector2 fieldPosition, float fieldWidth, float fieldHeight,
 }
 
 TextField::~TextField(){
+    ContainerBox::removeResizeListener(this);
 }
 
 void TextField::setText(std::string newText){

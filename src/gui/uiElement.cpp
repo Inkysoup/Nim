@@ -142,16 +142,17 @@ void UIElement::progressActive(int indexes){ // only valid for -1, 0, 1 if any e
     ptrActive = allElements[newIndex];
 }
 void UIElement::drawActive(){
-    if(ptrActive == nullptr){
-        return;
+    if(ptrActive != nullptr){
+        ptrActive->drawSelect();
     }
-    
+}
+
+void UIElement::drawSelect(){
     float thickness = getOutlineWidth();
     float offset = 2.0f*thickness;
     float cornerLength = 5.0f*thickness;
     
-    
-    Rectangle rect = ptrActive->getRect();
+    Rectangle rect = getRect();
     rlPushMatrix();
     rlTranslatef(rect.x, rect.y, 0.0f);
         // --- dashed rect --- //
