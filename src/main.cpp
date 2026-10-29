@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     Shader backgroundShader = LoadShader(0, TextFormat("src/stripeShader.fs"));
 
 
-    GameBoard gameBoard{{0.5f,0.5f}, 0.8f, 0.8f, 0.05f, 0.125f};
+    GameBoard gameBoard{{0.5f,0.5f}, 0.9f, 0.9f, 0.0625f, 0.125f};
     gameBoard.setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y}); 
 
     ContainerBox topBar{{0.5f,0.0f}, 1.0f, 0.2f};
@@ -175,7 +175,6 @@ int main(int argc, char** argv) {
                 unsigned int colour1UniformLocation = GetShaderLocation(backgroundShader, "colour1");
                 Vector3 colour1 = Vector3(tanColour.r/255.0f, tanColour.g/255.0f, tanColour.b/255.0f) ;
                 SetShaderValue(backgroundShader, colour1UniformLocation, &colour1, SHADER_UNIFORM_VEC3);
-
                 unsigned int colour2UniformLocation = GetShaderLocation(backgroundShader, "colour2");
                 Vector3 colour2 = Vector3(mediumTanColour.r/255.0f, mediumTanColour.g/255.0f, mediumTanColour.b/255.0f);
                 SetShaderValue(backgroundShader, colour2UniformLocation, &colour2, SHADER_UNIFORM_VEC3);

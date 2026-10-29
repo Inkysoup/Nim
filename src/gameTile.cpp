@@ -20,7 +20,7 @@ GameTile::~GameTile(){
 }
 
 void GameTile::Draw(){
-    Button::Draw();
+    //Button::Draw();
     if(isMarked) DrawRectangleRec(getRect(), Color{255, 255, 0, 128});
 }
 

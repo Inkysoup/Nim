@@ -13,6 +13,9 @@ private:
     std::vector<unsigned> rowSums;
     SelectionSet* selectedRow;
 
+    Shader matchShader;
+    Shader selectedFireShader;
+
     int getRowByMSB(unsigned bitmask);
     int getNonSingleRow();
     void disableTiles(int rowIndex, unsigned count);
