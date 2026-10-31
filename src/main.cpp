@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     Shader backgroundShader = LoadShader(0, TextFormat("src/stripeShader.fs"));
 
 
-    GameBoard gameBoard{{0.5f,0.5f}, 0.9f, 0.9f, 0.0625f, 0.125f};
+    GameBoard gameBoard{{0.5f,0.55f}, 0.85f, 0.9f, 0.075f, 0.125f};
     gameBoard.setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y}); 
 
     ContainerBox topBar{{0.5f,0.0f}, 1.0f, 0.2f};
@@ -59,19 +59,33 @@ int main(int argc, char** argv) {
         itp->setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y});
         return static_cast<ContainerBox*>(topBar.addChild(std::move(itp)));
     }();
+
     TextButton* resetButton = [&insetTopBar](){
-        auto rb = std::make_unique<TextButton>(Vector2{0.0f, 0.0f}, 0.2f, 0.1f, limeColour, "Reset");
+        auto rb = std::make_unique<TextButton>(Vector2{0.0f, 0.0f}, 0.1f, 0.1f, redColour, "↺");
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(rb)));
     }();
+    SpeechBubble* resetWarning = [&resetButton](){
+        auto sb = std::make_unique<SpeechBubble>(Vector2{0.5f,-0.3f}, Vector2{0.5f, 1.5f}, "Reset?", 1.0f, false, 0.25f, 0.15f);
+        sb->setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::TOP});
+        sb->setTextAlignment({ContainerBox::CENTRE_X, ContainerBox::TOP});
+        return static_cast<SpeechBubble*>(resetButton->addChild(std::move(sb)));
+    }();
+    TextButton* confirmResetButton = [&resetWarning](){
+        auto crb = std::make_unique<TextButton>(Vector2{0.5f, 1.0f}, 0.15f, 0.1f, limeColour, "Yes");
+        crb->setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y});
+        return static_cast<TextButton*>(resetWarning->addControl(std::move(crb)));
+    }();
+    resetWarning->hide();
+
 
     TextButton* submitButton = [&insetTopBar](){
-        auto sb = std::make_unique<TextButton>(Vector2{0.5f, 0.0f}, 0.3f, 0.1f, limeColour, "Submit");
+        auto sb = std::make_unique<TextButton>(Vector2{0.5f, 0.0f}, 0.5f, 0.1f, sageColour, "Submit");
         sb->setOriginAlignment(ContainerBox::CENTRE_X);
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(sb)));
     }();
 
     TextButton* informationButton = [&insetTopBar](){
-        auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.2f, 0.1f, creamColour, "Info");
+        auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.1f, 0.1f, greyColour, "🛈");
         ib->setOriginAlignment(ContainerBox::RIGHT);
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(ib)));
     }();
@@ -80,8 +94,18 @@ int main(int argc, char** argv) {
     submitButton->bindOnClick([&gameBoard](){
         gameBoard.submit();
     });
-    resetButton->bindOnClick([&gameBoard](){
+
+    resetButton->bindOnClick([resetWarning, confirmResetButton](){
+        resetWarning->hide();
+        resetWarning->show();
+        confirmResetButton->setActive();
+    });
+    confirmResetButton->bindOnClick([resetWarning, &gameBoard](){
+        resetWarning->hide();
         gameBoard.resetState();
+    });
+    confirmResetButton->bindOnUnactive([resetWarning](){
+        resetWarning->hide();
     });
 
 
@@ -93,7 +117,6 @@ int main(int argc, char** argv) {
 
 
     Vector2 mousePos;
-    Vector2 mouseDirection;
 
     while (!WindowShouldClose()) // main loop
     {
@@ -104,16 +127,6 @@ int main(int argc, char** argv) {
         }
 
         mousePos = GetMousePosition();
-        float previousMousePosDistance = Vector2Distance(previousMousePos, mousePos);
-        float previousMousePosOffset = 5.0f;
-        if(previousMousePosDistance > previousMousePosOffset){
-            previousMousePos = Vector2MoveTowards(mousePos, previousMousePos, previousMousePosOffset);
-        }
-        else if(previousMousePosDistance < previousMousePosOffset){
-            previousMousePos = Vector2Add(Vector2Scale(Vector2Normalize(Vector2Subtract(previousMousePos, mousePos)), previousMousePosOffset), mousePos);
-        }
-        mouseDirection = Vector2Subtract(mousePos, previousMousePos);
-
         bool mouseUp = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
         bool mouseDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 
@@ -124,7 +137,7 @@ int main(int argc, char** argv) {
             }
         }
         if(UIElement::getActive() != nullptr){
-            if(mouseDown == true and UIElement::getActive()->getButtonState() != UIElement::HOVERED){
+            if(mouseDown == true and UIElement::getActive()->getButtonState() != UIElement::HELD){
                 UIElement::clearActive();
             }
         }
@@ -190,6 +203,7 @@ int main(int argc, char** argv) {
             for(UIElement* uiElement: UIElement::getAllElements()) {
                 if(uiElement->getIsAutoDraw()) uiElement->Draw();
             }
+            resetWarning->Draw();
             UIElement::drawActive();
         EndDrawing();
     };

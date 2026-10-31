@@ -14,12 +14,11 @@ private:
     SelectionSet* selectedRow;
 
     Timer sumbitTimer;
-    float submitDelaySeconds;
+    float burnDelaySeconds;
     Timer computerTimer;
     float computerDelaySeconds;
 
     Shader matchShader;
-    Shader selectedFireShader;
     Vector4 fireColour;
 
     int getRowByMSB(unsigned bitmask);

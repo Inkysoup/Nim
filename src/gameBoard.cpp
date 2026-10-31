@@ -9,7 +9,6 @@
 #include <iostream>
 
 #define MAX_TILES 64 // must be same as in matchShader.fs
-#define MAX_SELECTED 15 // must be same as in selectedFireShader.fs
 
 int GameBoard::getRowByMSB(unsigned bitmask){
     for(unsigned i = 0; i<rowSums.size(); ++i){
@@ -46,13 +45,13 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
         ContainerBox(position, boardWidth, boardHeight),
         sumbitTimer(0.0f),
         computerTimer(0.0f){
-    submitDelaySeconds = 0.25f; // is also length of burn animation
-    computerDelaySeconds = 0.50f;
+    burnDelaySeconds = 0.3f; // controls speed of burn animation
+    computerDelaySeconds = 0.3f; // pause before computer move's burn animation is played 
     sumbitTimer.bindOnEnd([this](){ // onSumbit
         disableSelected();
         computerMove();
         fireColour = Vector4(0.0f, 0.5f, 0.95f, 1.0f); 
-        computerTimer.setSecondsRemaining(computerDelaySeconds);
+        computerTimer.setSecondsRemaining(computerDelaySeconds + burnDelaySeconds);
         computerTimer.resume();
     });
     
@@ -92,12 +91,10 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
     }
 
     matchShader = LoadShader(0, TextFormat("src/matchShader.fs"));
-    selectedFireShader = LoadShader(0, TextFormat("src/selectedFireShader.fs"));
 }
 
 GameBoard::~GameBoard(){
     UnloadShader(matchShader);
-    UnloadShader(selectedFireShader);
 }
 
 void GameBoard::Draw(){
@@ -105,66 +102,19 @@ void GameBoard::Draw(){
     float headRadius = tileRect.width/4.0f;
     float outlineThickness = getOutlineWidth();
     
-
     auto setHeadCentreUniform = [](Shader shader, unsigned i, Vector2 headCentre){
-        unsigned int headCentreUniformLocation = GetShaderLocation(shader, TextFormat("headCentres[%d]", i));
+        unsigned int headCentreUniformLocation = GetShaderLocation(shader, TextFormat("tiles[%d].headCentre", i));
         SetShaderValue(shader, headCentreUniformLocation, &headCentre, SHADER_UNIFORM_VEC2);
     };
-    
-    if(selectedRow != nullptr){
-        BeginShaderMode(selectedFireShader); // selected fire effect
-            unsigned int fireRadiusUniformLocation = GetShaderLocation(selectedFireShader, "fireRadius");
-            float fireRadius = headRadius*3.0f;
-            SetShaderValue(selectedFireShader, fireRadiusUniformLocation, &fireRadius, SHADER_UNIFORM_FLOAT);
+    auto setIsMarkedUniform = [](Shader shader, unsigned i, bool isMarked){
+        unsigned int isMarkedUniformLocation = GetShaderLocation(shader, TextFormat("tiles[%d].isMarked", i));
+        int isMarkedInt = isMarked ? 1 : 0;
+        SetShaderValue(shader, isMarkedUniformLocation, &isMarkedInt, SHADER_UNIFORM_INT);
+    };
 
-            unsigned int timeUniformLocation = GetShaderLocation(selectedFireShader, "time");
-            float time = GetTime();
-            SetShaderValue(selectedFireShader, timeUniformLocation, &time, SHADER_UNIFORM_FLOAT);
 
-            unsigned int fireColour1UniformLocation = GetShaderLocation(selectedFireShader, "fireColour1");
-            Vector4 fireColour1 = fireColour;
-            SetShaderValue(selectedFireShader, fireColour1UniformLocation, &fireColour1, SHADER_UNIFORM_VEC4);
-            unsigned int fireColour2UniformLocation = GetShaderLocation(selectedFireShader, "fireColour2");
-            Vector4 fireColour2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-            SetShaderValue(selectedFireShader, fireColour2UniformLocation, &fireColour2, SHADER_UNIFORM_VEC4);
-
-            unsigned int outlineThicknessUniformLocation = GetShaderLocation(selectedFireShader, "outlineThickness");
-            SetShaderValue(selectedFireShader, outlineThicknessUniformLocation, &outlineThickness, SHADER_UNIFORM_FLOAT);
-
-            unsigned i = 0;
-            for(ContainerBox* child: selectedRow->getMembers()){
-                if(auto* tile = dynamic_cast<GameTile*>(child)){
-                    if(!tile->getIsMarked()) continue;
-                    Rectangle rect = tile->getRect();
-                    Vector2 headCentre = {rect.x + rect.width/2.0f, rect.y + headRadius + outlineThickness};
-                    setHeadCentreUniform(selectedFireShader, i, headCentre);
-                    ++i;
-                }
-            }
-            unsigned int selectedCountUniformLocation = GetShaderLocation(selectedFireShader, "selectedCount");
-            int selectedCount = i;
-            assert(selectedCount <= MAX_SELECTED);
-            SetShaderValue(selectedFireShader, selectedCountUniformLocation, &selectedCount, SHADER_UNIFORM_INT);
-            while(i<MAX_TILES){
-                Vector2 headCentre = {0.0, 0.0};
-                setHeadCentreUniform(selectedFireShader, i, headCentre);
-                ++i;
-            }
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RED);
-
-        EndShaderMode();
-    }
-
-    BeginShaderMode(matchShader); // matches
-        unsigned int burnProgressUniformLocation = GetShaderLocation(matchShader, "burnProgress");
-        float burnTime = std::fmod(submitDelaySeconds - sumbitTimer.getSecondsRemaining(), submitDelaySeconds);
-        if(burnTime == 0.0f){
-            float invertedComputerBurnTime = std::min(computerTimer.getSecondsRemaining(), submitDelaySeconds);
-            burnTime = std::fmod(submitDelaySeconds - invertedComputerBurnTime, submitDelaySeconds);
-        }
-        float burnProgress = burnTime/submitDelaySeconds;
-        SetShaderValue(matchShader, burnProgressUniformLocation, &burnProgress, SHADER_UNIFORM_FLOAT); // for charing animation
-
+    BeginShaderMode(matchShader);
+        // matches
         unsigned int headRadiusUniformLocation = GetShaderLocation(matchShader, "headRadius");
         SetShaderValue(matchShader, headRadiusUniformLocation, &headRadius, SHADER_UNIFORM_FLOAT);
 
@@ -172,14 +122,41 @@ void GameBoard::Draw(){
         float stickRadius = headRadius/2.0f;
         SetShaderValue(matchShader, stickRadiusUniformLocation, &stickRadius, SHADER_UNIFORM_FLOAT);
 
-        unsigned int outlineThicknessUniformLocation = GetShaderLocation(matchShader, "outlineThickness");
-        SetShaderValue(matchShader, outlineThicknessUniformLocation, &outlineThickness, SHADER_UNIFORM_FLOAT);
-
         unsigned int stickLengthUniformLocation = GetShaderLocation(matchShader, "stickLength");
         float tileHeight = tileRect.height;
         float stickLength = tileHeight - headRadius - outlineThickness*2.0f - stickRadius;
         SetShaderValue(matchShader, stickLengthUniformLocation, &stickLength, SHADER_UNIFORM_FLOAT);
 
+        unsigned int outlineThicknessUniformLocation = GetShaderLocation(matchShader, "outlineThickness");
+        SetShaderValue(matchShader, outlineThicknessUniformLocation, &outlineThickness, SHADER_UNIFORM_FLOAT);
+
+        unsigned int burnProgressUniformLocation = GetShaderLocation(matchShader, "burnProgress");
+        float burnTime = std::fmod(burnDelaySeconds - sumbitTimer.getSecondsRemaining(), burnDelaySeconds);
+        if(burnTime == 0.0f){
+            float invertedComputerBurnTime = std::min(computerTimer.getSecondsRemaining(), burnDelaySeconds);
+            burnTime = std::fmod(burnDelaySeconds - invertedComputerBurnTime, burnDelaySeconds);
+        }
+        float burnProgress = burnTime/burnDelaySeconds;
+        SetShaderValue(matchShader, burnProgressUniformLocation, &burnProgress, SHADER_UNIFORM_FLOAT); // for charing animation
+
+
+        // selected fire
+        unsigned int timeUniformLocation = GetShaderLocation(matchShader, "time");
+        float time = GetTime();
+        SetShaderValue(matchShader, timeUniformLocation, &time, SHADER_UNIFORM_FLOAT);
+
+        unsigned int fireRadiusUniformLocation = GetShaderLocation(matchShader, "fireRadius");
+        float fireRadius = headRadius*3.0f;
+        SetShaderValue(matchShader, fireRadiusUniformLocation, &fireRadius, SHADER_UNIFORM_FLOAT);
+
+        unsigned int fireColour1UniformLocation = GetShaderLocation(matchShader, "fireColour1");
+        Vector4 fireColour1 = fireColour;
+        SetShaderValue(matchShader, fireColour1UniformLocation, &fireColour1, SHADER_UNIFORM_VEC4);
+        unsigned int fireColour2UniformLocation = GetShaderLocation(matchShader, "fireColour2");
+        Vector4 fireColour2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        SetShaderValue(matchShader, fireColour2UniformLocation, &fireColour2, SHADER_UNIFORM_VEC4);
+
+        
         unsigned i = 0;
         for(const auto& rowSelectionSet: gameTiles){
             for(ContainerBox* child: rowSelectionSet->getMembers()){
@@ -188,6 +165,7 @@ void GameBoard::Draw(){
                     Rectangle rect = tile->getRect();
                     Vector2 headCentre = {rect.x + rect.width/2.0f, rect.y + headRadius + outlineThickness};
                     setHeadCentreUniform(matchShader, i, headCentre);
+                    setIsMarkedUniform(matchShader, i, tile->getIsMarked());
                     ++i;
                 }
             }
@@ -214,7 +192,7 @@ void GameBoard::update(){
 void GameBoard::submit(){
     if(getIsPaused()) return;
     if(selectedRow == nullptr) return;
-    sumbitTimer.setSecondsRemaining(submitDelaySeconds);
+    sumbitTimer.setSecondsRemaining(burnDelaySeconds);
     sumbitTimer.resume(); // on end call sumbit function
 }
 
