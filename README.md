@@ -1,3 +1,3 @@
 # Nim
 
-Nim made in raylib with c++
+Nim made in c++ with raylib
