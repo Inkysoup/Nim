@@ -49,6 +49,10 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
     computerDelaySeconds = 0.3f; // pause before computer move's burn animation is played 
     sumbitTimer.bindOnEnd([this](){ // onSumbit
         disableSelected();
+        if(isGameOver()){
+            onEndfunc(false);
+            return;
+        }
         computerMove();
         fireColour = Vector4(0.0f, 0.5f, 0.95f, 1.0f); 
         computerTimer.setSecondsRemaining(computerDelaySeconds + burnDelaySeconds);
@@ -58,6 +62,7 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
     computerTimer.bindOnEnd([this](){
         disableSelected();
         fireColour = Vector4(0.95f, 0.5f, 0.0f, 1.0f);
+        if(isGameOver()) onEndfunc(true);
     });
     
     
@@ -288,6 +293,21 @@ void GameBoard::resetState(){
         }
         rowSelectionSet->resizeBoundingBox();
     }
+}
+
+void GameBoard::bindOnEnd(std::function<void(bool win)> func){
+    onEndfunc = func;
+}
+
+bool GameBoard::isGameOver(){
+    for(const auto& rowSelectionSet: gameTiles){
+        for(ContainerBox* child: rowSelectionSet->getMembers()){
+            if(auto* tile = dynamic_cast<GameTile*>(child)) {
+                if(!tile->getIsDisabled()) return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool GameBoard::getIsPaused(){

@@ -84,6 +84,10 @@ int main(int argc, char** argv) {
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(sb)));
     }();
 
+    SpeechBubble endDialogue = {Vector2{0.5f, 0.5f}, Vector2{0.5f, 0.5f}, "You Win!", 1.0f, true};
+    endDialogue.setOriginAlignment({ContainerBox::CENTRE_X, ContainerBox::CENTRE_Y});
+    endDialogue.hide();
+
     submitButton->bindOnClick([&gameBoard](){
         gameBoard.submit();
     });
@@ -93,14 +97,20 @@ int main(int argc, char** argv) {
         resetWarning->show();
         confirmResetButton->setActive();
     });
-    confirmResetButton->bindOnClick([resetWarning, &gameBoard](){
+    confirmResetButton->bindOnClick([resetWarning, &gameBoard, &endDialogue](){
         resetWarning->hide();
         gameBoard.resetState();
+        endDialogue.hide();
     });
     confirmResetButton->bindOnUnactive([resetWarning](){
         resetWarning->hide();
     });
 
+    gameBoard.bindOnEnd([&endDialogue](bool win){
+        if(win) endDialogue.setText("You Win! :)");
+        else endDialogue.setText("You Lost :(");
+        endDialogue.show();
+    });
 
     std::random_device rd;
     Vector2 screenSize = Vector2(GetScreenWidth(), GetScreenHeight());
@@ -196,6 +206,7 @@ int main(int argc, char** argv) {
                 if(uiElement->getIsAutoDraw()) uiElement->Draw();
             }
             resetWarning->Draw();
+            endDialogue.Draw();
             UIElement::drawActive();
         EndDrawing();
     };

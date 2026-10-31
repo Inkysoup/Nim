@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 
 #include "containerBox.hpp"
 #include "gameTile.hpp"
@@ -21,6 +22,8 @@ private:
     Shader matchShader;
     Vector4 fireColour;
 
+    std::function<void(bool win)> onEndfunc;
+
     int getRowByMSB(unsigned bitmask);
     int getNonSingleRow();
     //void disableTiles(int rowIndex, unsigned count);
@@ -37,6 +40,9 @@ public:
     void selectTiles(int rowIndex, unsigned count);
     void computerMove();
     void resetState();
+
+    void bindOnEnd(std::function<void(bool win)> func); // true = win, false = loss
+    bool isGameOver();
 
     bool getIsPaused();
 };
