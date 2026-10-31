@@ -79,17 +79,10 @@ int main(int argc, char** argv) {
 
 
     TextButton* submitButton = [&insetTopBar](){
-        auto sb = std::make_unique<TextButton>(Vector2{0.5f, 0.0f}, 0.5f, 0.1f, sageColour, "Submit");
-        sb->setOriginAlignment(ContainerBox::CENTRE_X);
+        auto sb = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.65f, 0.1f, sageColour, "Submit");
+        sb->setOriginAlignment(ContainerBox::RIGHT);
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(sb)));
     }();
-
-    TextButton* informationButton = [&insetTopBar](){
-        auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.1f, 0.1f, greyColour, "🛈");
-        ib->setOriginAlignment(ContainerBox::RIGHT);
-        return static_cast<TextButton*>(insetTopBar->addChild(std::move(ib)));
-    }();
-
 
     submitButton->bindOnClick([&gameBoard](){
         gameBoard.submit();
@@ -109,7 +102,6 @@ int main(int argc, char** argv) {
     });
 
 
-    Vector2 previousMousePos;
     std::random_device rd;
     Vector2 screenSize = Vector2(GetScreenWidth(), GetScreenHeight());
     float screenMagnitude = ContainerBox::getScreenMagnitude();

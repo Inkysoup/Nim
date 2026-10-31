@@ -79,14 +79,12 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
         float yPos = i*(relativeTileHeight + relativeYTileGap);
         
         int tileCount = 1 + 2*i;
-        gameTiles.emplace_back(std::make_unique<SelectionSet>());
-        SelectionSet* ss = &*gameTiles.back();
+        gameTiles.emplace_back(std::make_unique<GameTileSelectionSet>());
+        GameTileSelectionSet* ss = &*gameTiles.back();
         for(int j = 0; j<tileCount; ++j){
             float xPos = 0.5f + (j-tileCount/2.0f)*(relativeTileWidth) + (j-(tileCount-1)/2.0f) * relativeXTileGap;
             auto gt = std::make_unique<GameTile>(Vector2{xPos, yPos}, tileWidth, tileHeight, ss);
-            gt->setAutoDraw(false);
-            gt->setTabNavigatable(false);
-            gameTiles.back()->addMember(addChild(std::move(gt)));
+            gameTiles.back()->addMember(static_cast<GameTile*>(addChild(std::move(gt))));
         }
     }
 
@@ -196,7 +194,7 @@ void GameBoard::submit(){
     sumbitTimer.resume(); // on end call sumbit function
 }
 
-void GameBoard::setSelectedRow(SelectionSet* row){
+void GameBoard::setSelectedRow(GameTileSelectionSet* row){
     if(row == selectedRow) return;
     if(selectedRow != nullptr){
         for(ContainerBox* child: selectedRow->getMembers()){

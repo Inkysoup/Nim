@@ -70,7 +70,6 @@ TextContainer::TextContainer(Vector2 containerPosition, float padding, std::stri
         std::string fontRoot = "assets/fonts/";
         std::vector<std::pair<std::string, std::vector<int>>> fontCodepoints = {
             {fontRoot + "NotoSansMath-Regular.ttf", {0x21BA,}}, // ↺ = 0x21BA;
-            {fontRoot + "NotoSansSymbols-Regular.ttf", {0x1F6C8,}}, // 🛈 = 0x1F6C8;
         };
         TextContainer::fontResources->font = loadFontSDF(fontRoot + "NotoSans-Regular.ttf", fontCodepoints);
         TextContainer::fontResources->shader = LoadShader(0, TextFormat("src/gui/sdfText.fs"));

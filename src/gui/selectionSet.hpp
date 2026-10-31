@@ -22,5 +22,4 @@ public:
     void handleKeyboardInput(int keycode) override;
     bool isPressed(Vector2 mousePos, bool mouseUp, bool mouseDown) override;
     void onScreenResize() override;
-
 };

@@ -12,6 +12,7 @@ private:
     bool isDisabled;
     bool doAutoDraw;
     bool isTabNavigatable;
+    bool allowedActive;
     static UIElement* ptrActive;
     static std::pair<float, Color> activeLineProperties[2];
     static void sortAllElements();
@@ -36,6 +37,7 @@ public:
     virtual bool isPressed(Vector2 mousePos, bool mouseUp, bool mouseDown);
     void setPressed();
     void setActive();
+    void setAllowedActive(bool allowedActive);
     static UIElement* getActive();
     bool isActive();
     static void clearActive();

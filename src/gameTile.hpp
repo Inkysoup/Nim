@@ -1,14 +1,14 @@
 #pragma once
 
-#include "selectionSet.hpp"
+#include "gameTileSelectionSet.hpp"
 #include "button.hpp"
 
 class GameTile: public Button{
 private:
     bool isMarked;
-    SelectionSet* rowSet;
+    GameTileSelectionSet* rowSet;
 public:
-    GameTile(Vector2 position, float tileWidth, float tileHeight, SelectionSet* rowSet);
+    GameTile(Vector2 position, float tileWidth, float tileHeight, GameTileSelectionSet* rowSet);
     ~GameTile();
 
     void drawMarked();

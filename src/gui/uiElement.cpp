@@ -31,6 +31,7 @@ UIElement::UIElement(Vector2 boxPosition, float boxWidth, float boxHeight) : Con
     isDisabled = false;
     doAutoDraw = true;
     isTabNavigatable = true;
+    allowedActive = true;
     onClickFunc = [](){return;};
     onUnactiveFunc = [](){return;};
 }
@@ -102,7 +103,13 @@ void UIElement::setActive(){
     }
     ptrActive = this;
 }
-UIElement* UIElement::getActive(){
+void UIElement::setAllowedActive(bool allowedActive){
+    this->allowedActive = allowedActive;
+    setTabNavigatable(allowedActive);
+}
+
+UIElement *UIElement::getActive()
+{
     return ptrActive;
 }
 bool UIElement::isActive(){
@@ -122,6 +129,11 @@ void UIElement::progressActive(int indexes){ // only valid for -1, 0, 1 if any e
         return;
     }
     
+    if(ptrActive == nullptr){
+        allElements[0]->setActive();
+        return;
+    }
+
     auto it = std::find(allElements.begin(), allElements.end(), ptrActive);
     if(it == allElements.end()){
         ptrActive = allElements[0];
@@ -226,7 +238,7 @@ bool UIElement::isPressed(Vector2 mousePos, bool mouseUp, bool mouseDown)
     }
 
     if(CheckCollisionPointRec(mousePos, ContainerBox::getRect()) and mouseUp){
-        setActive();
+        if(allowedActive) setActive();
         onClickFunc();
         buttonState = HOVERED;
         return true;

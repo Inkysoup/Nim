@@ -5,8 +5,10 @@
 
 using namespace constants;
 
-GameTile::GameTile(Vector2 position, float tileWidth, float tileHeight, SelectionSet* rowSet):
+GameTile::GameTile(Vector2 position, float tileWidth, float tileHeight, GameTileSelectionSet* rowSet):
         Button(position, tileWidth, tileHeight, darkTanColour){
+    setAllowedActive(false);
+    setAutoDraw(false);
     isMarked = false;
     this->rowSet = rowSet;
     Button::bindOnClick([this, rowSet](){

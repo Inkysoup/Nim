@@ -4,14 +4,14 @@
 
 #include "containerBox.hpp"
 #include "gameTile.hpp"
-#include "selectionSet.hpp"
+#include "gameTileSelectionSet.hpp"
 
 
 class GameBoard: public ContainerBox{
 private:
-    std::vector<std::unique_ptr<SelectionSet>> gameTiles;
+    std::vector<std::unique_ptr<GameTileSelectionSet>> gameTiles;
     std::vector<unsigned> rowSums;
-    SelectionSet* selectedRow;
+    GameTileSelectionSet* selectedRow;
 
     Timer sumbitTimer;
     float burnDelaySeconds;
@@ -33,7 +33,7 @@ public:
     void update();
 
     void submit();
-    void setSelectedRow(SelectionSet* row);
+    void setSelectedRow(GameTileSelectionSet* row);
     void selectTiles(int rowIndex, unsigned count);
     void computerMove();
     void resetState();
