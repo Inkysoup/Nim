@@ -292,6 +292,7 @@ void GameBoard::resetState(){
             }
         }
         rowSelectionSet->resizeBoundingBox();
+        rowSelectionSet->setTabNavigatable(true);
     }
 }
 
