@@ -9,6 +9,7 @@ in vec4 fragColor;
 out vec4 finalColor;
 
 // Custom variable
+uniform float burnProgress; // 0 to 1
 uniform float headRadius;
 uniform float stickRadius;
 uniform float stickLength;
@@ -63,6 +64,6 @@ void main(){
         vec3 fillColour = mix(HEAD_COLOUR, STICK_COLOUR, factor);
         colour = mix(colour, vec4(fillColour, 1.0), alpha);
     }
-
+    colour = vec4(mix(colour.rgb, vec3(0.0), burnProgress), colour.a);
     finalColor = colour;
 }

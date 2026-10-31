@@ -1,5 +1,7 @@
 #include "gameBoard.hpp"
 
+#include "timer.hpp"
+
 #include <bit>
 #include <random>
 #include <cassert>
@@ -22,23 +24,46 @@ int GameBoard::getNonSingleRow(){
     return -1;
 }
 
-void GameBoard::disableTiles(int rowIndex, unsigned count){
-    int i = 0;
-    auto rowSelectionSet = gameTiles[rowIndex]->getMembers();
-    while(count > 0){
-        if(auto* tile = dynamic_cast<GameTile*>(rowSelectionSet[i])) {
-            if(!tile->getIsDisabled()){
+void GameBoard::disableSelected(){
+    if(selectedRow == nullptr) return;
+
+    int removedTiles = 0;
+    for(ContainerBox* child: selectedRow->getMembers()){
+        if(auto* tile = dynamic_cast<GameTile*>(child)) {
+            if(tile->getIsMarked()){
+                tile->unmark();
                 tile->disable();
-                --count;
+                ++removedTiles;
             }
-            ++i;
         }
     }
-    gameTiles[rowIndex]->resizeBoundingBox();
+    if(removedTiles == 0) return;
+    selectedRow->resizeBoundingBox();
+    selectedRow = nullptr;
 }
 
 GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, float tileWidth, float tileHeight):
-        ContainerBox(position, boardWidth, boardHeight){
+        ContainerBox(position, boardWidth, boardHeight),
+        sumbitTimer(0.0f),
+        computerTimer(0.0f){
+    submitDelaySeconds = 0.25f; // is also length of burn animation
+    computerDelaySeconds = 0.50f;
+    sumbitTimer.bindOnEnd([this](){ // onSumbit
+        disableSelected();
+        computerMove();
+        fireColour = Vector4(0.0f, 0.5f, 0.95f, 1.0f); 
+        computerTimer.setSecondsRemaining(computerDelaySeconds);
+        computerTimer.resume();
+    });
+    
+    computerTimer.bindOnEnd([this](){
+        disableSelected();
+        fireColour = Vector4(0.95f, 0.5f, 0.0f, 1.0f);
+    });
+    
+    
+    fireColour = Vector4(0.95f, 0.5f, 0.0f, 1.0f);
+
     selectedRow = nullptr;
     int rowCount = 5;
 
@@ -60,7 +85,6 @@ GameBoard::GameBoard(Vector2 position, float boardWidth, float boardHeight, floa
         for(int j = 0; j<tileCount; ++j){
             float xPos = 0.5f + (j-tileCount/2.0f)*(relativeTileWidth) + (j-(tileCount-1)/2.0f) * relativeXTileGap;
             auto gt = std::make_unique<GameTile>(Vector2{xPos, yPos}, tileWidth, tileHeight, ss);
-            //gt->setOriginAlignment(CENTRE_X);
             gt->setAutoDraw(false);
             gt->setTabNavigatable(false);
             gameTiles.back()->addMember(addChild(std::move(gt)));
@@ -77,16 +101,10 @@ GameBoard::~GameBoard(){
 }
 
 void GameBoard::Draw(){
-    // for(const auto& rowSelectionSet: gameTiles){
-    //     for(ContainerBox* child: rowSelectionSet->getMembers()){
-    //         if(auto* tile = dynamic_cast<GameTile*>(child)) {
-    //             tile->Draw();
-    //         }
-    //     }
-    // }
     Rectangle tileRect = gameTiles[0]->getMembers()[0]->getRect();
     float headRadius = tileRect.width/4.0f;
     float outlineThickness = getOutlineWidth();
+    
 
     auto setHeadCentreUniform = [](Shader shader, unsigned i, Vector2 headCentre){
         unsigned int headCentreUniformLocation = GetShaderLocation(shader, TextFormat("headCentres[%d]", i));
@@ -104,7 +122,7 @@ void GameBoard::Draw(){
             SetShaderValue(selectedFireShader, timeUniformLocation, &time, SHADER_UNIFORM_FLOAT);
 
             unsigned int fireColour1UniformLocation = GetShaderLocation(selectedFireShader, "fireColour1");
-            Vector4 fireColour1 = Vector4(0.95f, 0.5f, 0.0f, 1.0f);
+            Vector4 fireColour1 = fireColour;
             SetShaderValue(selectedFireShader, fireColour1UniformLocation, &fireColour1, SHADER_UNIFORM_VEC4);
             unsigned int fireColour2UniformLocation = GetShaderLocation(selectedFireShader, "fireColour2");
             Vector4 fireColour2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -138,6 +156,15 @@ void GameBoard::Draw(){
     }
 
     BeginShaderMode(matchShader); // matches
+        unsigned int burnProgressUniformLocation = GetShaderLocation(matchShader, "burnProgress");
+        float burnTime = std::fmod(submitDelaySeconds - sumbitTimer.getSecondsRemaining(), submitDelaySeconds);
+        if(burnTime == 0.0f){
+            float invertedComputerBurnTime = std::min(computerTimer.getSecondsRemaining(), submitDelaySeconds);
+            burnTime = std::fmod(submitDelaySeconds - invertedComputerBurnTime, submitDelaySeconds);
+        }
+        float burnProgress = burnTime/submitDelaySeconds;
+        SetShaderValue(matchShader, burnProgressUniformLocation, &burnProgress, SHADER_UNIFORM_FLOAT); // for charing animation
+
         unsigned int headRadiusUniformLocation = GetShaderLocation(matchShader, "headRadius");
         SetShaderValue(matchShader, headRadiusUniformLocation, &headRadius, SHADER_UNIFORM_FLOAT);
 
@@ -179,22 +206,16 @@ void GameBoard::Draw(){
     EndShaderMode();
 }
 
+void GameBoard::update(){
+    sumbitTimer.update();
+    computerTimer.update();
+}
+
 void GameBoard::submit(){
+    if(getIsPaused()) return;
     if(selectedRow == nullptr) return;
-    int removedTiles = 0;
-    for(ContainerBox* child: selectedRow->getMembers()){
-        if(auto* tile = dynamic_cast<GameTile*>(child)) {
-            if(tile->getIsMarked()){
-                tile->unmark();
-                tile->disable();
-                ++removedTiles;
-            }
-        }
-    }
-    if(removedTiles == 0) return;
-    selectedRow->resizeBoundingBox();
-    selectedRow = nullptr;
-    computerMove();
+    sumbitTimer.setSecondsRemaining(submitDelaySeconds);
+    sumbitTimer.resume(); // on end call sumbit function
 }
 
 void GameBoard::setSelectedRow(SelectionSet* row){
@@ -207,6 +228,23 @@ void GameBoard::setSelectedRow(SelectionSet* row){
         }
     }
     selectedRow = row;
+}
+
+void GameBoard::selectTiles(int rowIndex, unsigned count){
+    int i = 0;
+    auto rowSelectionSet = gameTiles[rowIndex]->getMembers();
+    while(count > 0){
+        if(auto* tile = dynamic_cast<GameTile*>(rowSelectionSet[i])) {
+            if(!tile->getIsDisabled()){
+                tile->mark();
+                --count;
+            }
+            ++i;
+        }
+        else{
+            std::terminate();
+        }
+    }
 }
 
 void GameBoard::computerMove(){
@@ -249,7 +287,7 @@ void GameBoard::computerMove(){
             removeCount = 1;
         }
     }
-    else if(singlesRemaining > 0 or multisRemaining > 0){ // computer loses
+    else if(singlesRemaining > 0 or multisRemaining > 0){ // computer loses, make random move
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> rowDist(0, singlesRemaining + multisRemaining - 1);
@@ -261,8 +299,7 @@ void GameBoard::computerMove(){
         std::uniform_int_distribution<> removeCountDist(1, rowSums[rowIndex]);
         removeCount = removeCountDist(gen);
     }
-
-    disableTiles(rowIndex, removeCount);
+    selectTiles(rowIndex, removeCount);
 }
 
 void GameBoard::resetState(){
@@ -275,4 +312,8 @@ void GameBoard::resetState(){
         }
         rowSelectionSet->resizeBoundingBox();
     }
+}
+
+bool GameBoard::getIsPaused(){
+    return sumbitTimer.getIsCounting() or computerTimer.getIsCounting();
 }

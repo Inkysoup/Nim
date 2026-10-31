@@ -8,24 +8,27 @@ using namespace constants;
 GameTile::GameTile(Vector2 position, float tileWidth, float tileHeight, SelectionSet* rowSet):
         Button(position, tileWidth, tileHeight, darkTanColour){
     isMarked = false;
+    this->rowSet = rowSet;
     Button::bindOnClick([this, rowSet](){
-        isMarked ? unmark() : mark();
         if(GameBoard* parent = dynamic_cast<GameBoard*>(getParent())){
-            parent->setSelectedRow(rowSet);
+            if(parent->getIsPaused()) return;
         }
+        isMarked ? unmark() : mark();
     });
 }
 
 GameTile::~GameTile(){
 }
 
-void GameTile::Draw(){
-    //Button::Draw();
+void GameTile::drawMarked(){
     if(isMarked) DrawRectangleRec(getRect(), Color{255, 255, 0, 128});
 }
 
 void GameTile::mark(){
     isMarked = true;
+    if(GameBoard* parent = dynamic_cast<GameBoard*>(getParent())){
+        parent->setSelectedRow(rowSet);
+    }
 }
 void GameTile::unmark(){
     isMarked = false;

@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     }();
 
     TextButton* informationButton = [&insetTopBar](){
-        auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.1f, 0.1f, creamColour, "i");
+        auto ib = std::make_unique<TextButton>(Vector2{1.0f, 0.0f}, 0.2f, 0.1f, creamColour, "Info");
         ib->setOriginAlignment(ContainerBox::RIGHT);
         return static_cast<TextButton*>(insetTopBar->addChild(std::move(ib)));
     }();
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
             keyPressed = GetKeyPressed();
         }
 
-
+        gameBoard.update();
 
         if(UIElement::getActive() != nullptr){
             if(UIElement::getActive()->getIsDisabled()){

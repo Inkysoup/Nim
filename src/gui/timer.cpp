@@ -3,7 +3,7 @@
 Timer::Timer(float durationSeconds){
     isCounting = false;
     secondsRemaining = durationSeconds;
-    // onEndFunc = []();
+    onEndFunc = [](){};
 }
 
 Timer::~Timer(){
@@ -41,12 +41,13 @@ void Timer::update(){
         secondsRemaining -= std::chrono::duration<float>(now - previousTime).count();
         secondsRemaining = std::max(secondsRemaining, 0.0f);
         previousTime = now;
-        // if(secondsRemaining == 0.0f){
-        //     onEndFunc();
-        // }
+        if(secondsRemaining == 0.0f){
+            isCounting = false;
+            onEndFunc();
+        }
     }
 }
 
-// void Timer::bindOnEnd(std::function<void(void)> func){
-//     onEndFunc = func;
-// }
+void Timer::bindOnEnd(std::function<void(void)> func){
+    onEndFunc = func;
+}
