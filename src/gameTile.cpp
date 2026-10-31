@@ -27,12 +27,16 @@ void GameTile::drawMarked(){
 }
 
 void GameTile::mark(){
-    isMarked = true;
     if(GameBoard* parent = dynamic_cast<GameBoard*>(getParent())){
+        if(parent->getIsPaused()) return;
         parent->setSelectedRow(rowSet);
     }
+    isMarked = true;
 }
 void GameTile::unmark(){
+    if(GameBoard* parent = dynamic_cast<GameBoard*>(getParent())){
+        if(parent->getIsPaused()) return;
+    }
     isMarked = false;
 }
 bool GameTile::getIsMarked(){

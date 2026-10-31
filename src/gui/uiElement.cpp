@@ -151,7 +151,9 @@ void UIElement::progressActive(int indexes){ // only valid for -1, 0, 1 if any e
             return;
         }
     }
+    UIElement* oldActive = ptrActive;
     ptrActive = allElements[newIndex];
+    oldActive->callUnactiveFunc();
 }
 void UIElement::drawActive(){
     if(ptrActive != nullptr){
