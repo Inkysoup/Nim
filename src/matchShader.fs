@@ -35,7 +35,7 @@ uniform int matchCount;
 #define STICK_COLOUR vec3(0.9, 0.8, 0.7)
 #define HEAD_COLOUR vec3(0.9, 0.3, 0.3)
 
-
+// sdf functions from https://iquilezles.org/articles/ //
 float opSmoothUnion( float a, float b, float k )
 {
     k *= 4.0;
@@ -68,7 +68,7 @@ float sdUnevenCapsule(vec2 p, float r1, float r2, float h){
     if( k > a*h ) return length(p-vec2(0.0,h)) - r2;
     return dot(p, vec2(a,b) ) - r1;
 }
-
+// --------------------------------------------------- // 
 
 // https://github.com/ashima/webgl-noise/blob/master/src/noise2D.glsl, returns range -1.0 to 1.0 //
 vec3 mod289(vec3 x) {

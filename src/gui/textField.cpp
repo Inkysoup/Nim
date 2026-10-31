@@ -52,9 +52,6 @@ std::vector<std::string> TextField::wordVector2LineVector(std::vector<std::strin
             }
             lineVector.back() += wordVector[i];
             currentLineLength += wordWidths[i];
-            if(currentLineLength > rect.width){
-                std::cout<< currentLineLength << " " << rect.width << "\n";
-            }
         }   
     }
     return lineVector;
